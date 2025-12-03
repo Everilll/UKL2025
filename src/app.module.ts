@@ -9,9 +9,10 @@ import { MatakuliahModule } from './matakuliah/matakuliah.module';
 import { AdminModule } from './admin/admin.module';
 import { MahasiswaModule } from './mahasiswa/mahasiswa.module';
 import { PenjadwalanModule } from './penjadwalan/penjadwalan.module';
+import { AnalysisModule } from './analysis/analysis.module';
 
 @Module({
-  imports: [DosenModule, PrismaModule, BcryptModule, AuthModule, MatakuliahModule, AdminModule, MahasiswaModule, PenjadwalanModule],
+  imports: [DosenModule, PrismaModule, BcryptModule, AuthModule, MatakuliahModule, AdminModule, MahasiswaModule, PenjadwalanModule, AnalysisModule],
   controllers: [AppController],
   providers: [AppService],
 })
