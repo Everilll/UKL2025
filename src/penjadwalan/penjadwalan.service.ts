@@ -1,0 +1,257 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { CreatePenjadwalanDto } from './dto/create-penjadwalan.dto';
+import { UpdatePenjadwalanDto } from './dto/update-penjadwalan.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { BcryptService } from 'src/bcrypt/bcrypt.service';
+
+@Injectable()
+export class PenjadwalanService {
+  constructor(
+    private prisma: PrismaService,
+    private readonly bcrypt: BcryptService,
+  ) { }
+
+  async create(createPenjadwalanDto: CreatePenjadwalanDto) {
+    try {
+      const {
+        id_dosen,
+        id_matakuliah,
+        hari,
+        start_time,
+        end_time,
+      } = createPenjadwalanDto;
+
+      const findDosen = await this.prisma.dosen.findUnique({
+        where: { nidn: id_dosen },
+      })
+
+      if (!findDosen) {
+        return {
+          success: false,
+          message: `Dosen not found`,
+          data: null,
+        }
+      }
+
+      const findMatakuliah = await this.prisma.matakuliah.findUnique({
+        where: { id: id_matakuliah },
+      })
+
+      if (!findMatakuliah) {
+        return {
+          success: false,
+          message: `Matakuliah not found`,
+          data: null,
+        }
+      }
+
+      const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+      if (!timeRegex.test(start_time) || !timeRegex.test(end_time)) {
+        throw new BadRequestException("Format jam harus HH:MM (00-23:59)");
+      }
+
+      function toMinutes(time: string) {
+        const [h, m] = time.split(":").map(Number);
+        return h * 60 + m;
+      }
+
+      if (toMinutes(start_time) >= toMinutes(end_time)) {
+        throw new BadRequestException("start_time harus lebih awal dari end_time");
+      }
+
+
+      const createPenjadwalan = await this.prisma.penjadwalan.create({
+        data: {
+          id_dosen,
+          id_matakuliah,
+          hari,
+          start_time,
+          end_time,
+        },
+      })
+
+      return {
+        success: true,
+        message: `Penjadwalan created successfully`,
+        data: {
+          id: createPenjadwalan.id,
+          id_dosen: createPenjadwalan.id_dosen,
+          id_matakuliah: createPenjadwalan.id_matakuliah,
+          jadwal: `${createPenjadwalan.hari} ${createPenjadwalan.start_time}-${createPenjadwalan.end_time}`,
+        },
+      }
+
+    } catch (error) {
+      return {
+        success: false,
+        message: `Something went wrong ${error.message}`,
+        data: null,
+      }
+    }
+  }
+
+  async findAll() {
+    try {
+      const penjadwalan = await this.prisma.penjadwalan.findMany({
+        select: {
+          id: true,
+          id_dosen: true,
+          id_matakuliah: true,
+          hari: true,
+          start_time: true,
+          end_time: true,
+        }
+      });
+      return {
+        success: true,
+        message: `Penjadwalan retrieved successfully`,
+        data: penjadwalan.map(p => ({
+          id: p.id,
+          id_dosen: p.id_dosen,
+          id_matakuliah: p.id_matakuliah,
+          jadwal: `${p.hari} ${p.start_time}-${p.end_time}`,
+        })),
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `Something went wrong ${error.message}`,
+        data: null,
+      }
+    }
+  }
+
+  async update(id: number, updatePenjadwalanDto: UpdatePenjadwalanDto) {
+    try {
+      const {
+        id_dosen,
+        id_matakuliah,
+        hari,
+        start_time,
+        end_time,
+      } = updatePenjadwalanDto;
+
+      const findPenjadwalan = await this.prisma.penjadwalan.findUnique({
+        where: { id },
+      })
+
+      if (!findPenjadwalan) {
+        return {
+          success: false,
+          message: `Penjadwalan with ID ${id} not found`,
+          data: null,
+        }
+      }
+
+      const findDosen = await this.prisma.dosen.findUnique({
+        where: { nidn: findPenjadwalan.id_dosen },
+      })
+
+      if (!findDosen) {
+        return {
+          success: false,
+          message: `Dosen not found`,
+          data: null,
+        }
+      }
+
+      const findMatakuliah = await this.prisma.matakuliah.findUnique({
+        where: { id: findPenjadwalan.id_matakuliah },
+      })
+
+      if (!findMatakuliah) {
+        return {
+          success: false,
+          message: `Matakuliah not found`,
+          data: null,
+        }
+      }
+
+      const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+      if (start_time && !timeRegex.test(start_time)) {
+        throw new BadRequestException("Format start_time harus HH:MM");
+      }
+
+      if (end_time && !timeRegex.test(end_time)) {
+        throw new BadRequestException("Format end_time harus HH:MM");
+      }
+
+      function toMinutes(time: string) {
+        const [h, m] = time.split(":").map(Number);
+        return h * 60 + m;
+      }
+
+      const finalStart = start_time ?? findPenjadwalan.start_time;
+      const finalEnd = end_time ?? findPenjadwalan.end_time;
+
+      if (toMinutes(finalStart) >= toMinutes(finalEnd)) {
+        throw new BadRequestException("start_time harus lebih awal dari end_time");
+      }
+
+
+      const updatePenjadwalan = await this.prisma.penjadwalan.update({
+        where: { id },
+        data: {
+          id_dosen: id_dosen ?? findPenjadwalan.id_dosen,
+          id_matakuliah: id_matakuliah ?? findPenjadwalan.id_matakuliah,
+          hari: hari ?? findPenjadwalan.hari,
+          start_time: start_time ?? findPenjadwalan.start_time,
+          end_time: end_time ?? findPenjadwalan.end_time,
+        },
+      })
+
+      return {
+        success: true,
+        message: `Penjadwalan updated successfully`,
+        data: {
+          id: updatePenjadwalan.id,
+          id_dosen: updatePenjadwalan.id_dosen,
+          id_matakuliah: updatePenjadwalan.id_matakuliah,
+          jadwal: `${updatePenjadwalan.hari} ${updatePenjadwalan.start_time}-${updatePenjadwalan.end_time}`,
+        }
+      }
+
+    } catch (error) {
+      return {
+        success: false,
+        message: `Something went wrong ${error.message}`,
+        data: null,
+      }
+    }
+  }
+
+  async remove(id: number) {
+    try {
+      const findPenjadwalan = await this.prisma.penjadwalan.findUnique({
+        where: { id },
+      })
+
+      if (!findPenjadwalan) {
+        return {
+          success: false,
+          message: `Penjadwalan with ID ${id} not found`,
+          data: null,
+        }
+      }
+
+      const deletePenjadwalan = await this.prisma.penjadwalan.delete({
+        where: { id },
+      });
+
+      return {
+        success: true,
+        message: `Penjadwalan with ID ${id} deleted successfully`,
+        data: deletePenjadwalan,
+      }
+
+    } catch (error) {
+      return {
+        success: false,
+        message: `Something went wrong ${error.message}`,
+        data: null,
+      }
+    }
+  }
+}
