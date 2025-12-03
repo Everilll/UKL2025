@@ -15,8 +15,17 @@ export class AnalysisService {
       const { tahun_ajaran, semester, limit = 10 } = analysisDto;
 
       const wherePengambilan: any = {};
-      if (tahun_ajaran) wherePengambilan.tahun_ajaran = tahun_ajaran;
-      if (semester) wherePengambilan.semester = semester;
+      const wherePenjadwalan: any = {};
+
+      if (tahun_ajaran) {
+        wherePengambilan.tahun_ajaran = tahun_ajaran;
+        wherePenjadwalan.tahun_ajaran = tahun_ajaran;
+      }
+
+      if (semester) {
+        wherePengambilan.semester = String(semester);
+        wherePenjadwalan.semester = String(semester);
+      }
 
       const topMatakuliah = await this.prisma.pengambilan.groupBy({
         by: ["id_penjadwalan"],
@@ -28,8 +37,11 @@ export class AnalysisService {
 
       const matkulDetail = await Promise.all(
         topMatakuliah.map(async (item) => {
-          const jadwal = await this.prisma.penjadwalan.findUnique({
-            where: { id: item.id_penjadwalan },
+          const jadwal = await this.prisma.penjadwalan.findFirst({
+            where: {
+              id: item.id_penjadwalan,
+              ...wherePenjadwalan,     // <-- FIX PENTING
+            },
             include: {
               matakuliah: true,
               dosen: true,
@@ -60,6 +72,7 @@ export class AnalysisService {
 
       const topDosen = await this.prisma.penjadwalan.groupBy({
         by: ["id_dosen"],
+        where: wherePenjadwalan,
         _count: { id: true },
         orderBy: { _count: { id: "desc" } },
         take: limit,
@@ -73,8 +86,8 @@ export class AnalysisService {
 
           const totalPengambilan = await this.prisma.pengambilan.count({
             where: {
-              penjadwalan: { id_dosen: item.id_dosen },
               ...wherePengambilan,
+              penjadwalan: { id_dosen: item.id_dosen },
             },
           });
 

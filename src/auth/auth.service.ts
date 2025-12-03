@@ -17,6 +17,22 @@ export class AuthService {
     try {
       const { username, password } = authDto;
 
+      if (username === '') {
+        return {
+          success: false,
+          message: `Username are required`,
+          data: null,
+        };
+      }
+
+      if (password === '') {
+        return {
+          success: false,
+          message: `Password are required`,
+          data: null,
+        };
+      }
+
       const existingUsername = await this.prisma.user.findUnique({
         where: { username },
       });

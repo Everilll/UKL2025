@@ -24,14 +24,14 @@ export class PenjadwalanService {
 
       const findMatakuliah = await this.prisma.matakuliah.findUnique({
         where: { id: id_matakuliah },
-      })
+      });
 
       if (!findMatakuliah) {
         return {
           success: false,
           message: `Matakuliah not found`,
           data: null,
-        }
+        };
       }
 
       const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -49,6 +49,32 @@ export class PenjadwalanService {
         throw new BadRequestException("start_time harus lebih awal dari end_time");
       }
 
+      const existing = await this.prisma.penjadwalan.findMany({
+        where: {
+          id_matakuliah,
+          hari,
+          semester: String(semester),  // karena kolom semester = String
+          tahun_ajaran,
+        },
+      });
+
+      function isOverlap(startA: string, endA: string, startB: string, endB: string): boolean {
+        const aStart = Number(startA.replace(":", ""));
+        const aEnd = Number(endA.replace(":", ""));
+        const bStart = Number(startB.replace(":", ""));
+        const bEnd = Number(endB.replace(":", ""));
+        return aStart < bEnd && bStart < aEnd;
+      }
+
+      for (const jadwal of existing) {
+        if (isOverlap(start_time, end_time, jadwal.start_time, jadwal.end_time)) {
+          return {
+            success: false,
+            message: `Matakuliah ini sudah dijadwalkan di hari ${hari} pada waktu yang sama/bentrok`,
+            data: null,
+          };
+        }
+      }
       const createPenjadwalan = await this.prisma.penjadwalan.create({
         data: {
           id_dosen: findMatakuliah.id_dosen,
@@ -59,7 +85,7 @@ export class PenjadwalanService {
           tahun_ajaran,
           semester,
         },
-      })
+      });
 
       return {
         success: true,
@@ -72,26 +98,27 @@ export class PenjadwalanService {
           tahun_ajaran: createPenjadwalan.tahun_ajaran,
           semester: createPenjadwalan.semester,
         },
-      }
+      };
 
     } catch (error) {
       return {
         success: false,
         message: `Something went wrong ${error.message}`,
         data: null,
-      }
+      };
     }
   }
+
 
   async findAll() {
     try {
       const penjadwalan = await this.prisma.penjadwalan.findMany({
-        include: { 
-          matakuliah:{
-            select: {id: true, id_matakuliah: true, nama_matakuliah:true}
+        include: {
+          matakuliah: {
+            select: { id: true, id_matakuliah: true, nama_matakuliah: true }
           },
           dosen: {
-            select: {nidn: true, nama_dosen:true}
+            select: { nidn: true, nama_dosen: true }
           }
         },
       })
