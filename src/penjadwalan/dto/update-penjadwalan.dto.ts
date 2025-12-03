@@ -23,4 +23,12 @@ export class UpdatePenjadwalanDto extends PartialType(CreatePenjadwalanDto) {
     @IsString()
     @IsOptional()
     end_time?: string;
+
+    @IsString()
+    @IsOptional()
+    tahun_ajaran?: string;
+
+    @IsString()
+    @IsOptional()
+    semester?: string;
 }

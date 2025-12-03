@@ -14,29 +14,29 @@ export class MatakuliahController {
   @UsePipes(new ValidationPipe())
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  create(@Body() createMatakuliahDto: CreateMatakuliahDto, @Request() req) {
-    return this.matakuliahService.create(createMatakuliahDto, req.user);
+  create(@Body() createMatakuliahDto: CreateMatakuliahDto) {
+    return this.matakuliahService.create(createMatakuliahDto);
   }
 
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  findAll(@Request() req) {
-    return this.matakuliahService.findAll(req.user);
+  findAll() {
+    return this.matakuliahService.findAll();
   }
 
   @Put(':id')
   @UsePipes(new ValidationPipe())
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  update(@Param('id') id: string, @Body() updateMatakuliahDto: UpdateMatakuliahDto, @Request() req) {
-    return this.matakuliahService.update(+id, updateMatakuliahDto, req.user);
+  update(@Param('id') id: string, @Body() updateMatakuliahDto: UpdateMatakuliahDto) {
+    return this.matakuliahService.update(+id, updateMatakuliahDto);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  remove(@Param('id') id: string, @Request() req) {
-    return this.matakuliahService.remove(+id, req.user);
+  remove(@Param('id') id: string) {
+    return this.matakuliahService.remove(+id);
   }
 }

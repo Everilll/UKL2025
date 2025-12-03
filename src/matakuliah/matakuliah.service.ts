@@ -9,7 +9,7 @@ export class MatakuliahService {
     private prisma: PrismaService,
   ) { }
 
-  async create(createMatakuliahDto: CreateMatakuliahDto, user: any) {
+  async create(createMatakuliahDto: CreateMatakuliahDto) {
     try {
       const {
         id_matakuliah,
@@ -17,14 +17,6 @@ export class MatakuliahService {
         id_dosen,
         sks,
       } = createMatakuliahDto;
-
-      if (user.role !== 'ADMIN') {
-        return {
-          success: false,
-          message: 'Only admin can create matakuliah',
-          data: null,
-        }
-      }
 
       const existingidmatakuliah = await this.prisma.matakuliah.findUnique({
         where: { id_matakuliah },
@@ -65,18 +57,13 @@ export class MatakuliahService {
           id_dosen,
           sks,
         },
+        include: { dosen: true },
       })
 
       return {
         success: true,
         message: 'Matakuliah created successfully',
-        data: {
-          id: createMatakuliah.id,
-          id_matakuliah: createMatakuliah.id_matakuliah,
-          nama_matakuliah: createMatakuliah.nama_matakuliah,
-          id_dosen: createMatakuliah.id_dosen,
-          sks: createMatakuliah.sks,
-        },
+        data: createMatakuliah
       }
 
     } catch (error) {
@@ -88,24 +75,10 @@ export class MatakuliahService {
     }
   }
 
-  async findAll(user: any) {
+  async findAll() {
     try {
-      if (user.role !== 'ADMIN') {
-        return {
-          success: false,
-          message: 'Only admin can access matakuliah list',
-          data: null,
-        }
-      }
-
       const matakuliahs = await this.prisma.matakuliah.findMany({
-        select: {
-          id: true,
-          id_matakuliah: true,
-          nama_matakuliah: true,
-          id_dosen: true,
-          sks: true,
-        }
+        include: { dosen: true },
       })
 
       return {
@@ -122,7 +95,7 @@ export class MatakuliahService {
     };
   }
 
-  async update(id: number, updateMatakuliahDto: UpdateMatakuliahDto, user: any) {
+  async update(id: number, updateMatakuliahDto: UpdateMatakuliahDto) {
     try {
       const {
         id_matakuliah,
@@ -130,14 +103,6 @@ export class MatakuliahService {
         id_dosen,
         sks,
       } = updateMatakuliahDto
-
-      if (user.role !== 'ADMIN') {
-        return {
-          success: false,
-          message: 'Only admin can update matakuliah',
-          data: null,
-        }
-      }
 
       const findMatakuliah = await this.prisma.matakuliah.findUnique({
         where: { id }
@@ -159,6 +124,7 @@ export class MatakuliahService {
           id_dosen: id_dosen ?? findMatakuliah.id_dosen,
           sks: sks ?? findMatakuliah.sks,
         },
+        include: { dosen: true },
       })
 
       return {
@@ -175,16 +141,8 @@ export class MatakuliahService {
     }
   }
 
-  async remove(id: number, user: any) {
+  async remove(id: number) {
     try {
-      if (user.role !== 'ADMIN') {
-        return {
-          success: false,
-          message: 'Only admin can delete matakuliah',
-          data: null,
-        }
-      }
-
       const findMatakuliah = await this.prisma.matakuliah.findUnique({
         where: { id },
       })

@@ -62,19 +62,35 @@ model mahasiswa {
   updatedAt      DateTime      @updatedAt
   user_id        Int           @unique
   user           user          @relation(fields: [user_id], references: [id])
+  pengambilans   pengambilan[]
 }
 
 model penjadwalan {
-  id            Int        @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   id_dosen      Int
   id_matakuliah Int
   hari          hari
   start_time    String
   end_time      String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  dosen         dosen      @relation(fields: [id_dosen], references: [nidn])
-  matakuliah    matakuliah @relation(fields: [id_matakuliah], references: [id])
+  tahun_ajaran  String
+  semester      String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  dosen         dosen         @relation(fields: [id_dosen], references: [nidn])
+  matakuliah    matakuliah    @relation(fields: [id_matakuliah], references: [id])
+  pengambilans  pengambilan[]
+}
+
+model pengambilan {
+  id             Int         @id @default(autoincrement())
+  id_mahasiswa   Int
+  id_penjadwalan Int
+  tahun_ajaran   String
+  semester       String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  mahasiswa      mahasiswa   @relation(fields: [id_mahasiswa], references: [id])
+  penjadwalan    penjadwalan @relation(fields: [id_penjadwalan], references: [id])
 }
 
 enum jenis_kelamin {

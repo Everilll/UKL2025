@@ -4,10 +4,6 @@ import { IsEnum, IsNotEmpty, IsNumber, IsString } from "class-validator";
 export class CreatePenjadwalanDto {
     @IsNumber()
     @IsNotEmpty()
-    id_dosen: number;
-
-    @IsNumber()
-    @IsNotEmpty()
     id_matakuliah: number;
 
     @IsEnum(hari)
@@ -21,4 +17,12 @@ export class CreatePenjadwalanDto {
     @IsString()
     @IsNotEmpty()
     end_time: string;
+
+    @IsString()
+    @IsNotEmpty()
+    tahun_ajaran: string;
+
+    @IsString()
+    @IsNotEmpty()
+    semester: string;
 }

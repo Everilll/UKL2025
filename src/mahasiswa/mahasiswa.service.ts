@@ -63,6 +63,7 @@ export class MahasiswaService {
         success: true,
         message: 'Mahasiswa created successfully',
         data: {
+          id: createMahasiswa.id,
           nim: createMahasiswa.nim,
           nama_mahasiswa: createMahasiswa.nama_mahasiswa,
           jenis_kelamin: createMahasiswa.jenis_kelamin,
@@ -82,6 +83,7 @@ export class MahasiswaService {
     try {
       const mahasiswa = await this.prisma.mahasiswa.findMany({
         select: {
+          id: true,
           nim: true,
           nama_mahasiswa: true,
           jenis_kelamin: true,
@@ -160,6 +162,7 @@ export class MahasiswaService {
         success: true,
         message: 'Mahasiswa updated successfully',
         data: {
+          id: updateMahasiswa.id,
           nim: updateMahasiswa.nim,
           nama_mahasiswa: updateMahasiswa.nama_mahasiswa,
           jenis_kelamin: updateMahasiswa.jenis_kelamin,
@@ -202,6 +205,7 @@ export class MahasiswaService {
         success: true,
         message: 'Mahasiswa deleted successfully',
         data: {
+          id: deleteMahasiswa.id,
           nim: deleteMahasiswa.nim,
           nama_mahasiswa: deleteMahasiswa.nama_mahasiswa,
           jenis_kelamin: deleteMahasiswa.jenis_kelamin,

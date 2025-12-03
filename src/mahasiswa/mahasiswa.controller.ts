@@ -5,10 +5,15 @@ import { UpdateMahasiswaDto } from './dto/update-mahasiswa.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/helper/roles-guard';
 import { Roles } from 'src/helper/roles.decorator';
+import { PilihMatakuliahDto } from './dto/pilih-matakuliah.dto';
+import { PengambilanService } from './pengambilan.service';
 
 @Controller('api/mahasiswa')
 export class MahasiswaController {
-  constructor(private readonly mahasiswaService: MahasiswaService) {}
+  constructor(
+    private readonly mahasiswaService: MahasiswaService,
+    private readonly pengambilanService: PengambilanService,
+  ) {}
 
   @Post()
   @UsePipes(new ValidationPipe())
@@ -16,6 +21,14 @@ export class MahasiswaController {
   @Roles('ADMIN')
   create(@Body() createMahasiswaDto: CreateMahasiswaDto, @Request() req) {
     return this.mahasiswaService.create(createMahasiswaDto, req.user);
+  }
+
+  @Post('pilih-matakuliah')
+  @UsePipes(new ValidationPipe())
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('MAHASISWA')
+  pilihMatakuliah(@Body() pilihMatakuliah: PilihMatakuliahDto) {
+    return this.pengambilanService.pilihMatakuliah(pilihMatakuliah);
   }
 
   @Get()

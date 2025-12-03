@@ -14,24 +14,13 @@ export class PenjadwalanService {
   async create(createPenjadwalanDto: CreatePenjadwalanDto) {
     try {
       const {
-        id_dosen,
         id_matakuliah,
         hari,
         start_time,
         end_time,
+        tahun_ajaran,
+        semester,
       } = createPenjadwalanDto;
-
-      const findDosen = await this.prisma.dosen.findUnique({
-        where: { nidn: id_dosen },
-      })
-
-      if (!findDosen) {
-        return {
-          success: false,
-          message: `Dosen not found`,
-          data: null,
-        }
-      }
 
       const findMatakuliah = await this.prisma.matakuliah.findUnique({
         where: { id: id_matakuliah },
@@ -60,14 +49,15 @@ export class PenjadwalanService {
         throw new BadRequestException("start_time harus lebih awal dari end_time");
       }
 
-
       const createPenjadwalan = await this.prisma.penjadwalan.create({
         data: {
-          id_dosen,
+          id_dosen: findMatakuliah.id_dosen,
           id_matakuliah,
           hari,
           start_time,
           end_time,
+          tahun_ajaran,
+          semester,
         },
       })
 
@@ -79,6 +69,8 @@ export class PenjadwalanService {
           id_dosen: createPenjadwalan.id_dosen,
           id_matakuliah: createPenjadwalan.id_matakuliah,
           jadwal: `${createPenjadwalan.hari} ${createPenjadwalan.start_time}-${createPenjadwalan.end_time}`,
+          tahun_ajaran: createPenjadwalan.tahun_ajaran,
+          semester: createPenjadwalan.semester,
         },
       }
 
@@ -94,24 +86,20 @@ export class PenjadwalanService {
   async findAll() {
     try {
       const penjadwalan = await this.prisma.penjadwalan.findMany({
-        select: {
-          id: true,
-          id_dosen: true,
-          id_matakuliah: true,
-          hari: true,
-          start_time: true,
-          end_time: true,
-        }
-      });
+        include: { 
+          matakuliah:{
+            select: {id: true, id_matakuliah: true, nama_matakuliah:true}
+          },
+          dosen: {
+            select: {nidn: true, nama_dosen:true}
+          }
+        },
+      })
+
       return {
         success: true,
         message: `Penjadwalan retrieved successfully`,
-        data: penjadwalan.map(p => ({
-          id: p.id,
-          id_dosen: p.id_dosen,
-          id_matakuliah: p.id_matakuliah,
-          jadwal: `${p.hari} ${p.start_time}-${p.end_time}`,
-        })),
+        data: penjadwalan
       }
     } catch (error) {
       return {
@@ -130,6 +118,8 @@ export class PenjadwalanService {
         hari,
         start_time,
         end_time,
+        tahun_ajaran,
+        semester,
       } = updatePenjadwalanDto;
 
       const findPenjadwalan = await this.prisma.penjadwalan.findUnique({
@@ -199,6 +189,8 @@ export class PenjadwalanService {
           hari: hari ?? findPenjadwalan.hari,
           start_time: start_time ?? findPenjadwalan.start_time,
           end_time: end_time ?? findPenjadwalan.end_time,
+          tahun_ajaran: tahun_ajaran ?? findPenjadwalan.tahun_ajaran,
+          semester: semester ?? findPenjadwalan.semester,
         },
       })
 
@@ -210,6 +202,8 @@ export class PenjadwalanService {
           id_dosen: updatePenjadwalan.id_dosen,
           id_matakuliah: updatePenjadwalan.id_matakuliah,
           jadwal: `${updatePenjadwalan.hari} ${updatePenjadwalan.start_time}-${updatePenjadwalan.end_time}`,
+          tahun_ajaran: updatePenjadwalan.tahun_ajaran,
+          semester: updatePenjadwalan.semester,
         }
       }
 
